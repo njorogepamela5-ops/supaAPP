@@ -1,0 +1,27 @@
+"use client";
+import { useEffect } from "react";
+import { supabase } from "../lib/supabaseClient";
+
+export default function WorkerDashboard() {
+  useEffect(() => {
+    const subscription = supabase
+      .from("orders") // make sure your table is called "orders"
+      .on("INSERT", (payload) => {
+        console.log("New order received:", payload.new);
+        alert(`New Order: #${payload.new.id} has been placed!`);
+      })
+      .subscribe();
+
+    // Cleanup on unmount
+    return () => {
+      supabase.removeSubscription(subscription);
+    };
+  }, []);
+
+  return (
+    <div>
+      <h1>Worker Dashboard</h1>
+      <p>Real-time updates will appear as alerts when new orders are placed.</p>
+    </div>
+  );
+}

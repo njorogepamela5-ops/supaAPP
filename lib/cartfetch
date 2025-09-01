@@ -1,0 +1,14 @@
+import { supabase } from "./supabaseClient";
+
+export async function getCart(userId: string) {
+  const { data, error } = await supabase
+    .from("cart")
+    .select("id, product_id, quantity, products(name, price)")
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("Error fetching cart:", error);
+    return [];
+  }
+  return data;
+}

@@ -1,0 +1,84 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
+import { supabase } from "../../lib/supabaseClient";
+
+interface Order {
+  id: number;
+  product_name: string;
+  quantity: number;
+  customer_name: string;
+  created_at: string;
+}
+
+export default function WorkerDashboard() {
+  const [orders, setOrders] = useState<Order[]>([]);
+
+  useEffect(() => {
+    // Fetch initial orders
+    fetchOrders();
+
+    // Subscribe to new orders
+    const subscription = supabase
+      .from("orders")
+      .on("INSERT", (payload) => {
+        const newOrder: Order = payload.new;
+        setOrders((prev) => [newOrder, ...prev]); // Add new order to top
+        toast.success(`New Order: #${newOrder.id} from ${newOrder.customer_name}`);
+      })
+      .subscribe();
+
+    // Cleanup subscription on unmount
+    return () => {
+      supabase.removeSubscription(subscription);
+    };
+  }, []);
+
+  const fetchOrders = async () => {
+    const { data, error } = await supabase
+      .from<Order>("orders")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching orders:", error);
+    } else {
+      setOrders(data || []);
+    }
+  };
+
+  return (
+    <div className="p-6">
+      <Toaster position="top-right" />
+      <h1 className="text-2xl font-bold mb-4">Worker Dashboard</h1>
+
+      {orders.length === 0 ? (
+        <p>No orders yet.</p>
+      ) : (
+        <table className="w-full border-collapse border border-gray-300">
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="border p-2">Order ID</th>
+              <th className="border p-2">Product</th>
+              <th className="border p-2">Quantity</th>
+              <th className="border p-2">Customer</th>
+              <th className="border p-2">Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders.map((order) => (
+              <tr key={order.id} className="hover:bg-gray-100">
+                <td className="border p-2">{order.id}</td>
+                <td className="border p-2">{order.product_name}</td>
+                <td className="border p-2">{order.quantity}</td>
+                <td className="border p-2">{order.customer_name}</td>
+                <td className="border p-2">{new Date(order.created_at).toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}

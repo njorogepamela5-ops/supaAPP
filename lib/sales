@@ -1,0 +1,11 @@
+export async function bestSellingProducts(limit = 5) {
+  const { data, error } = await supabase
+    .from("sales")
+    .select("product_id, SUM(quantity) as total_sold")
+    .group("product_id")
+    .order("total_sold", { ascending: false })
+    .limit(limit);
+
+  if (error) console.error(error);
+  return data;
+}

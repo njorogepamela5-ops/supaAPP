@@ -1,0 +1,23 @@
+import { supabase } from "./supabaseClient";
+
+// Generate invoice after payment
+export async function generateInvoice(userId: string, orderId: string, total: number) {
+  const { data, error } = await supabase
+    .from("invoices")
+    .insert([
+      {
+        user_id: userId,
+        order_id: orderId,
+        total,
+        status: "paid",
+      },
+    ]);
+
+  if (error) {
+    console.error("Error generating invoice:", error);
+  } else {
+    console.log("Invoice created:", data);
+  }
+
+  return data;
+}

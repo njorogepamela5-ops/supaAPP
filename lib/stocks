@@ -1,0 +1,16 @@
+export async function checkInventoryAlerts() {
+  // Low stock
+  const { data: lowStock } = await supabase
+    .from("products")
+    .select("*")
+    .lt("stock", 10); // threshold
+
+  // Near expiry (e.g., 3 days before expiry)
+  const { data: nearExpiry } = await supabase
+    .from("products")
+    .select("*")
+    .lte("expiry_date", new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString());
+
+  if (lowStock?.length) console.warn("Low stock items:", lowStock);
+  if (nearExpiry?.length) console.warn("Products near expiry:", nearExpiry);
+}
